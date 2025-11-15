@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Deal {
+  id                String      @id @default(cuid())
+  name              String
+  clientFullName    String
+  clientEmail       String
+  clientWebsite     String
+  companyName       String
+  dealValue         Float?
+  stage             DealStage
+  lastContactDate   DateTime?
+  isHubSpotImported Boolean     @default(false)
+  hubSpotDealId     String?     @unique
+  lastHubSpotSync   DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  stakeholders      Stakeholder[]
+  documents         Document[]
+  nextActions       NextAction[]
+  generatedContent  GeneratedContent[]
+  customAngles      CustomAngle[]
+
+  @@index([stage])
+  @@index([companyName])
+  @@index([hubSpotDealId])
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFIED
+  DISCOVERY
+  PROPOSAL
+  CLOSED
+}
+
+model Stakeholder {
+  id            String       @id @default(cuid())
+  dealId        String
+  fullName      String
+  companyRole   String
+  email         String
+  linkedinUrl   String?
+  buyerTypes    BuyerType[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  deal          Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+}
+
+enum BuyerType {
+  ECONOMIC_BUYER
+  TECHNICAL_BUYER
+  USER_BUYER
+  CHAMPION
+  BLOCKER
+}
+
+model Document {
+  id              String        @id @default(cuid())
+  dealId          String
+  name            String
+  type            DocumentType
+  source          DocumentSource
+  fileUrl         String?
+  content         String?       // Extracted text content for AI processing
+  uploadedAt      DateTime      @default(now())
+
+  deal            Deal          @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([type])
+}
+
+enum DocumentType {
+  EMAIL
+  CALL
+  NOTE
+  TRANSCRIPT
+  OTHER
+}
+
+enum DocumentSource {
+  HUBSPOT
+  MANUAL
+}
+
+model NextAction {
+  id              String    @id @default(cuid())
+  dealId          String
+  description     String
+  dueDate         DateTime?
+  isCompleted     Boolean   @default(false)
+  isAiSuggested   Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  deal            Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([isCompleted])
+}
+
+model GeneratedContent {
+  id                String              @id @default(cuid())
+  dealId            String
+  type              GeneratedContentType
+  name              String
+  angle             String
+  stakeholderNames  String?             // Comma-separated for meeting prep
+  content           String              // JSON-encoded content
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  deal              Deal                @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([type])
+}
+
+enum GeneratedContentType {
+  MEETING_PREP
+  EMAIL_SEQUENCE
+  BUNDLE
+}
+
+model CustomAngle {
+  id          String   @id @default(cuid())
+  dealId      String
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+}
