@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DealWithRelations } from '@/lib/types'
+import { ContentGenerationModal } from '@/components/deals/content-generation-modal'
 
 interface WhatInfoToGiveCardProps {
   deal: DealWithRelations
+  onUpdate: () => void
 }
 
 // Mock AI-generated talking points based on deal stage
@@ -83,42 +85,39 @@ const getTalkingPointsByStage = (stage: string) => {
   return pointsMap[stage] || pointsMap.PROSPECTING
 }
 
-export function WhatInfoToGiveCard({ deal }: WhatInfoToGiveCardProps) {
-  const [isGeneratingContent, setIsGeneratingContent] = useState(false)
+export function WhatInfoToGiveCard({ deal, onUpdate }: WhatInfoToGiveCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const talkingPoints = getTalkingPointsByStage(deal.stage)
 
-  const handleGenerateContent = () => {
-    // This will be handled by the Content Generation Flow (Component 4)
-    setIsGeneratingContent(true)
-    // TODO: Open angle selection modal
-    console.log('Generate content clicked')
-    setIsGeneratingContent(false)
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>What Info to Give</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-3">
-          {talkingPoints.map((point, index) => (
-            <li key={index} className="text-sm">
-              <span className="font-semibold">{point.category}:</span>{' '}
-              {point.point}
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-      <CardFooter>
-        <Button
-          className="w-full"
-          onClick={handleGenerateContent}
-          disabled={isGeneratingContent}
-        >
-          {isGeneratingContent ? 'Generating...' : 'Generate Content'}
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>What Info to Give</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3">
+            {talkingPoints.map((point, index) => (
+              <li key={index} className="text-sm">
+                <span className="font-semibold">{point.category}:</span>{' '}
+                {point.point}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={() => setIsModalOpen(true)}>
+            Generate Content
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <ContentGenerationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        deal={deal}
+        onSuccess={onUpdate}
+      />
+    </>
   )
 }

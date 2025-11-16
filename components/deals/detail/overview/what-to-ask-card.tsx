@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DealWithRelations } from '@/lib/types'
+import { MeetingPrepModal } from '@/components/deals/meeting-prep-modal'
 
 interface WhatToAskCardProps {
   deal: DealWithRelations
+  onUpdate: () => void
 }
 
 // Mock AI-generated questions based on deal stage
@@ -46,42 +48,39 @@ const getQuestionsByStage = (stage: string) => {
   return questionMap[stage] || questionMap.PROSPECTING
 }
 
-export function WhatToAskCard({ deal }: WhatToAskCardProps) {
-  const [isGeneratingPrep, setIsGeneratingPrep] = useState(false)
+export function WhatToAskCard({ deal, onUpdate }: WhatToAskCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const questions = getQuestionsByStage(deal.stage)
 
-  const handlePrepMeeting = () => {
-    // This will be handled by the Meeting Prep Generation Flow (Component 3)
-    setIsGeneratingPrep(true)
-    // TODO: Open stakeholder selection modal
-    console.log('Prep for next meeting clicked')
-    setIsGeneratingPrep(false)
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>What to Ask</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2">
-          {questions.map((question, index) => (
-            <li key={index} className="flex gap-2">
-              <span className="text-muted-foreground">•</span>
-              <span className="text-sm">{question}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-      <CardFooter>
-        <Button
-          className="w-full"
-          onClick={handlePrepMeeting}
-          disabled={isGeneratingPrep}
-        >
-          {isGeneratingPrep ? 'Preparing...' : 'Prep for Next Meeting'}
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>What to Ask</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {questions.map((question, index) => (
+              <li key={index} className="flex gap-2">
+                <span className="text-muted-foreground">•</span>
+                <span className="text-sm">{question}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={() => setIsModalOpen(true)}>
+            Prep for Next Meeting
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <MeetingPrepModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        deal={deal}
+        onSuccess={onUpdate}
+      />
+    </>
   )
 }

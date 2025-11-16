@@ -1,7 +1,6 @@
 'use client'
 
 import { DealWithRelations } from '@/lib/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NextActionsCard } from './overview/next-actions-card'
 import { WhoToEngageCard } from './overview/who-to-engage-card'
 import { WhatToAskCard } from './overview/what-to-ask-card'
@@ -18,8 +17,8 @@ export function OverviewTab({ deal, onUpdate }: OverviewTabProps) {
     <div className="grid gap-6">
       <NextActionsCard deal={deal} onUpdate={onUpdate} />
       <WhoToEngageCard deal={deal} />
-      <WhatToAskCard deal={deal} />
-      <WhatInfoToGiveCard deal={deal} />
+      <WhatToAskCard deal={deal} onUpdate={onUpdate} />
+      <WhatInfoToGiveCard deal={deal} onUpdate={onUpdate} />
       <WhatDataToAddCard deal={deal} />
     </div>
   )
