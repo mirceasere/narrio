@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { DocumentType } from '@prisma/client'
 import { Upload } from 'lucide-react'
+import { toast } from 'sonner'
 
 const documentTypeLabels: Record<DocumentType, string> = {
   EMAIL: 'Email',
@@ -94,9 +95,10 @@ export function DocumentUploadModal({
       if (onSuccess) {
         onSuccess()
       }
+      toast.success('Document uploaded successfully')
     } catch (error) {
       console.error('Error uploading document:', error)
-      alert('Failed to upload document. Please try again.')
+      toast.error('Failed to upload document. Please try again.')
     } finally {
       setIsLoading(false)
     }

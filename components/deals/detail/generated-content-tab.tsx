@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Select,
   SelectContent,
@@ -16,17 +17,20 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ContentGenerationModal } from '@/components/deals/content-generation-modal'
 import { MeetingPrepModal } from '@/components/deals/meeting-prep-modal'
 import { GeneratedContent, GeneratedContentType } from '@prisma/client'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const contentTypeLabels: Record<GeneratedContentType, string> = {
   MEETING_PREP: 'Meeting Prep',
@@ -71,12 +75,13 @@ export function GeneratedContentTab({ deal, onUpdate }: GeneratedContentTabProps
         throw new Error('Failed to delete content')
       }
 
+      toast.success('Content deleted successfully')
       setDeleteDialogOpen(false)
       setContentToDelete(null)
       onUpdate()
     } catch (error) {
       console.error('Error deleting content:', error)
-      alert('Failed to delete content. Please try again.')
+      toast.error('Failed to delete content. Please try again.')
     } finally {
       setIsDeleting(false)
     }
@@ -185,18 +190,23 @@ export function GeneratedContentTab({ deal, onUpdate }: GeneratedContentTabProps
                           {contentTypeLabels[content.type]}
                         </Badge>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setContentToDelete(content)
-                          setDeleteDialogOpen(true)
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setContentToDelete(content)
+                              setDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete content</TooltipContent>
+                      </Tooltip>
                     </div>
                     <h4 className="font-semibold mb-1">{content.name}</h4>
                     {content.angle && (
@@ -235,18 +245,17 @@ export function GeneratedContentTab({ deal, onUpdate }: GeneratedContentTabProps
         }}
       />
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Content</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "{contentToDelete?.name}"? This action
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Content</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "<strong>{contentToDelete?.name}</strong>"? This action
               cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false)
                 setContentToDelete(null)
@@ -254,17 +263,17 @@ export function GeneratedContentTab({ deal, onUpdate }: GeneratedContentTabProps
               disabled={isDeleting}
             >
               Cancel
-            </Button>
-            <Button
-              variant="destructive"
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

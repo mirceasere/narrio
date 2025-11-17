@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { DealStage } from '@prisma/client'
 import { extractDomainFromEmail, extractCompanyFromDomain } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const createDealSchema = z.object({
   name: z.string().min(1, 'Deal name is required'),
@@ -115,6 +116,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
       }
 
       const deal = await response.json()
+      toast.success('Deal created successfully!')
       onOpenChange(false)
 
       if (onSuccess) {
@@ -125,7 +127,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
       router.push(`/deals/${deal.id}`)
     } catch (error) {
       console.error('Error creating deal:', error)
-      alert('Failed to create deal. Please try again.')
+      toast.error('Failed to create deal. Please try again.')
     } finally {
       setIsLoading(false)
     }

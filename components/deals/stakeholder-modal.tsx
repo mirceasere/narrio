@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { BuyerType, Stakeholder } from '@prisma/client'
+import { toast } from 'sonner'
 
 const buyerTypeLabels: Record<BuyerType, string> = {
   ECONOMIC_BUYER: 'Economic Buyer',
@@ -84,7 +85,7 @@ export function StakeholderModal({
 
   const onSubmit = async (data: StakeholderForm) => {
     if (selectedBuyerTypes.length === 0) {
-      alert('Please select at least one buyer type')
+      toast.error('Please select at least one buyer type')
       return
     }
 
@@ -116,9 +117,10 @@ export function StakeholderModal({
       if (onSuccess) {
         onSuccess()
       }
+      toast.success(stakeholder ? 'Stakeholder updated successfully' : 'Stakeholder created successfully')
     } catch (error) {
       console.error('Error saving stakeholder:', error)
-      alert('Failed to save stakeholder. Please try again.')
+      toast.error('Failed to save stakeholder. Please try again.')
     } finally {
       setIsLoading(false)
     }

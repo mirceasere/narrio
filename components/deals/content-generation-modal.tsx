@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { DealWithRelations } from '@/lib/types'
 import { ChevronLeft, Loader2, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface ContentGenerationModalProps {
   open: boolean
@@ -72,7 +73,7 @@ export function ContentGenerationModal({
 
   const handleAddCustomAngle = () => {
     if (!customAngleTitle || !customAngleDescription) {
-      alert('Please fill in both title and description')
+      toast.error('Please fill in both title and description')
       return
     }
 
@@ -141,9 +142,10 @@ export function ContentGenerationModal({
 
       // Navigate to editor
       router.push(`/deals/${deal.id}/content/${generatedContent.id}`)
+      toast.success('Content generated successfully!')
     } catch (error) {
       console.error('Error generating content:', error)
-      alert('Failed to generate content. Please try again.')
+      toast.error('Failed to generate content. Please try again.')
     } finally {
       setIsGenerating(false)
     }

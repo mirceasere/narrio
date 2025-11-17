@@ -6,6 +6,8 @@ import { DealWithRelations } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Table,
   TableBody,
@@ -22,9 +24,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { DocumentUploadModal } from '@/components/deals/document-upload-modal'
 import { DocumentType, DocumentSource, Document } from '@prisma/client'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const documentTypeLabels: Record<DocumentType, string> = {
   EMAIL: 'Email',
@@ -64,7 +77,7 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
     if (!documentToDelete) return
 
     if (documentToDelete.source === 'HUBSPOT') {
-      alert('Cannot delete HubSpot-synced documents')
+      toast.error('Cannot delete HubSpot-synced documents')
       setDeleteDialogOpen(false)
       setDocumentToDelete(null)
       return
@@ -83,12 +96,13 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
         throw new Error('Failed to delete document')
       }
 
+      toast.success('Document deleted successfully')
       setDeleteDialogOpen(false)
       setDocumentToDelete(null)
       onUpdate()
     } catch (error) {
       console.error('Error deleting document:', error)
-      alert('Failed to delete document. Please try again.')
+      toast.error('Failed to delete document. Please try again.')
     } finally {
       setIsDeleting(false)
     }
@@ -168,34 +182,49 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {document.content && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleView(document)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleView(document)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>View document</TooltipContent>
+                          </Tooltip>
                         )}
                         {document.fileUrl && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(document.fileUrl!, '_blank')}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open(document.fileUrl!, '_blank')}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Download document</TooltipContent>
+                          </Tooltip>
                         )}
                         {document.source === 'MANUAL' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setDocumentToDelete(document)
-                              setDeleteDialogOpen(true)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setDocumentToDelete(document)
+                                  setDeleteDialogOpen(true)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete document</TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </TableCell>
@@ -217,18 +246,17 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
         }}
       />
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Document</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "{documentToDelete?.name}"? This action
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "<strong>{documentToDelete?.name}</strong>"? This action
               cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false)
                 setDocumentToDelete(null)
@@ -236,17 +264,17 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
               disabled={isDeleting}
             >
               Cancel
-            </Button>
-            <Button
-              variant="destructive"
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="sm:max-w-[700px]">
@@ -257,11 +285,11 @@ export function DealContextTab({ deal, onUpdate }: DealContextTabProps) {
               {documentToView && formatDate(documentToView.uploadedAt)}
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[500px] overflow-y-auto">
+          <ScrollArea className="h-[500px]">
             <div className="whitespace-pre-wrap text-sm p-4 bg-muted rounded-lg">
               {documentToView?.content || 'No content available'}
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
           </DialogFooter>

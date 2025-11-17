@@ -6,6 +6,20 @@ import { DealWithRelations } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Table,
   TableBody,
@@ -14,16 +28,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { StakeholderModal } from '@/components/deals/stakeholder-modal'
 import { BuyerType, Stakeholder } from '@prisma/client'
+import { toast } from 'sonner'
 
 const buyerTypeLabels: Record<BuyerType, string> = {
   ECONOMIC_BUYER: 'Economic Buyer',
@@ -78,15 +85,25 @@ export function StakeholderMapTab({ deal, onUpdate }: StakeholderMapTabProps) {
         throw new Error('Failed to delete stakeholder')
       }
 
+      toast.success('Stakeholder deleted successfully')
       setDeleteDialogOpen(false)
       setStakeholderToDelete(null)
       onUpdate()
     } catch (error) {
       console.error('Error deleting stakeholder:', error)
-      alert('Failed to delete stakeholder. Please try again.')
+      toast.error('Failed to delete stakeholder. Please try again.')
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 
   const handleModalClose = () => {
@@ -134,7 +151,70 @@ export function StakeholderMapTab({ deal, onUpdate }: StakeholderMapTabProps) {
                 {deal.stakeholders.map((stakeholder) => (
                   <TableRow key={stakeholder.id}>
                     <TableCell className="font-medium">
-                      {stakeholder.fullName}
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <div className="flex items-center gap-3 cursor-pointer">
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback>{getInitials(stakeholder.fullName)}</AvatarFallback>
+                            </Avatar>
+                            <span>{stakeholder.fullName}</span>
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarFallback className="text-lg">
+                                  {getInitials(stakeholder.fullName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-semibold">{stakeholder.fullName}</h4>
+                                <p className="text-sm text-muted-foreground">{stakeholder.companyRole}</p>
+                              </div>
+                            </div>
+                            <Separator />
+                            <div className="space-y-2">
+                              <p className="text-sm">
+                                <span className="font-medium">Email:</span>{' '}
+                                <a href={`mailto:${stakeholder.email}`} className="text-primary hover:underline">
+                                  {stakeholder.email}
+                                </a>
+                              </p>
+                              {stakeholder.linkedinUrl && (
+                                <p className="text-sm">
+                                  <span className="font-medium">LinkedIn:</span>{' '}
+                                  <a
+                                    href={stakeholder.linkedinUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline inline-flex items-center gap-1"
+                                  >
+                                    View Profile
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                </p>
+                              )}
+                              {stakeholder.buyerTypes.length > 0 && (
+                                <div>
+                                  <p className="text-sm font-medium mb-1">Buyer Types:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {stakeholder.buyerTypes.map((type) => (
+                                      <Badge
+                                        key={type}
+                                        variant="outline"
+                                        className={buyerTypeColors[type]}
+                                      >
+                                        {buyerTypeLabels[type]}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
                     </TableCell>
                     <TableCell>{stakeholder.companyRole}</TableCell>
                     <TableCell>
@@ -175,23 +255,33 @@ export function StakeholderMapTab({ deal, onUpdate }: StakeholderMapTabProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(stakeholder)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setStakeholderToDelete(stakeholder)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(stakeholder)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit stakeholder</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setStakeholderToDelete(stakeholder)
+                                setDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete stakeholder</TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -213,18 +303,17 @@ export function StakeholderMapTab({ deal, onUpdate }: StakeholderMapTabProps) {
         }}
       />
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Stakeholder</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {stakeholderToDelete?.fullName}? This
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Stakeholder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{stakeholderToDelete?.fullName}</strong>? This
               action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false)
                 setStakeholderToDelete(null)
@@ -232,17 +321,17 @@ export function StakeholderMapTab({ deal, onUpdate }: StakeholderMapTabProps) {
               disabled={isDeleting}
             >
               Cancel
-            </Button>
-            <Button
-              variant="destructive"
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

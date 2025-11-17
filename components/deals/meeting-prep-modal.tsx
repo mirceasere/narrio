@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { DealWithRelations } from '@/lib/types'
 import { BuyerType } from '@prisma/client'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const buyerTypeLabels: Record<BuyerType, string> = {
   ECONOMIC_BUYER: 'Economic Buyer',
@@ -51,7 +52,7 @@ export function MeetingPrepModal({
 
   const handleGenerate = async () => {
     if (selectedStakeholders.length === 0) {
-      alert('Please select at least one stakeholder')
+      toast.error('Please select at least one stakeholder')
       return
     }
 
@@ -78,10 +79,11 @@ export function MeetingPrepModal({
 
       // Navigate to editor
       router.push(`/deals/${deal.id}/content/${generatedContent.id}`)
+      toast.success('Meeting prep generated successfully!')
     } catch (error) {
       console.error('Error generating meeting prep:', error)
-      alert('Failed to generate meeting prep. Please try again.')
-    } finally {
+      toast.error('Failed to generate meeting prep. Please try again.')
+    } finally{
       setIsGenerating(false)
     }
   }
